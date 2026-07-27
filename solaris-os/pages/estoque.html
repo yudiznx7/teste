@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estoque — Solaris OS</title>
+<link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../css/style.css" rel="stylesheet">
+</head>
+<body data-page="estoque">
+
+<div id="page-body" hidden>
+
+  <div class="filter-bar">
+    <div class="topbar-search" style="max-width:280px">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="busca-produto" placeholder="Buscar por nome, código...">
+    </div>
+    <select class="form-select" id="filtro-categoria" style="max-width:180px"><option value="">Todas categorias</option></select>
+    <select class="form-select" id="filtro-status-estoque" style="max-width:170px">
+      <option value="">Todos os status</option>
+      <option value="verde">🟢 Normal</option>
+      <option value="amarelo">🟡 Estoque baixo</option>
+      <option value="vermelho">🔴 Zerado</option>
+    </select>
+    <div class="ms-auto text-muted small" id="contador-produtos"></div>
+  </div>
+
+  <div class="row g-3" id="grid-produtos"></div>
+  <nav class="mt-3"><ul class="pagination pagination-solaris justify-content-center mb-0" id="paginacao-produtos"></ul></nav>
+</div>
+
+<!-- MODAL CADASTRO / EDIÇÃO PRODUTO -->
+<div class="modal fade" id="modal-produto" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="modal-produto-title">Novo Produto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="form-produto">
+        <div class="modal-body">
+          <input type="hidden" id="p-id">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nome</label><input class="form-control" id="p-nome" required></div>
+            <div class="col-md-3">
+              <label class="form-label">Categoria</label>
+              <select class="form-select" id="p-categoria" required></select>
+            </div>
+            <div class="col-md-3"><label class="form-label">Código</label><input class="form-control" id="p-codigo" required></div>
+
+            <div class="col-md-3">
+              <label class="form-label">Fornecedor</label>
+              <select class="form-select" id="p-fornecedor"></select>
+            </div>
+            <div class="col-md-3"><label class="form-label">Quantidade</label><input type="number" min="0" class="form-control" id="p-quantidade" required></div>
+            <div class="col-md-3"><label class="form-label">Quantidade mínima</label><input type="number" min="0" class="form-control" id="p-minimo" required></div>
+            <div class="col-md-3"><label class="form-label">Valor unitário (R$)</label><input type="number" min="0" step="0.01" class="form-control" id="p-valor" required></div>
+
+            <div class="col-md-6"><label class="form-label">Local do estoque</label><input class="form-control" id="p-local"></div>
+            <div class="col-md-6"><label class="form-label">Imagem (URL)</label><input class="form-control" id="p-imagem" placeholder="https://..."></div>
+            <div class="col-12"><label class="form-label">Observações</label><textarea class="form-control" id="p-obs" rows="2"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-solaris px-4">Salvar produto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MOVIMENTAÇÃO -->
+<div class="modal fade" id="modal-movimentacao" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0"><h5 class="modal-title">Registrar movimentação</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form id="form-movimentacao">
+        <div class="modal-body">
+          <input type="hidden" id="m-produto-id">
+          <p class="small text-muted mb-3" id="m-produto-nome"></p>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Tipo</label>
+              <select class="form-select" id="m-tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+            </div>
+            <div class="col-6"><label class="form-label">Quantidade</label><input type="number" min="1" class="form-control" id="m-quantidade" required></div>
+            <div class="col-12"><label class="form-label">Motivo</label><input class="form-control" id="m-motivo" placeholder="Ex: Compra, uso em OS, ajuste..."></div>
+            <div class="col-12"><label class="form-label">Data</label><input type="date" class="form-control" id="m-data" required></div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-solaris px-4">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/app-shell.js"></script>
+<script src="../js/estoque.js"></script>
+</body>
+</html>
